@@ -14,6 +14,7 @@ from .FluorescenceTask import FluorescenceTask
 from .LanguageModelingTask import LanguageModelingTask
 from .MaskedLanguageModelingTask import MaskedLanguageModelingTask, mask_params
 from .NetsurfTask import NetsurfTask
+from .OwnLanguageModelingTask import OwnLanguageModelingTaskNext, OwnLanguageModelingTaskMask
 from .BeplerPairedScopeTask import BeplerPairedScopeTask
 from .RemoteHomologyTask import RemoteHomologyTask
 from .SecondaryStructureTask import SecondaryStructureTask, secondary_structure_params
@@ -30,6 +31,8 @@ class TaskBuilder:
         'fluorescence': FluorescenceTask,
         'language_modeling': LanguageModelingTask,
         'masked_language_modeling': MaskedLanguageModelingTask,
+        'own_language_modeling_next': OwnLanguageModelingTaskNext,
+        'own_language_modeling_mask': OwnLanguageModelingTaskMask,
         'netsurf': NetsurfTask,
         'remote_homology': RemoteHomologyTask,
         'secondary_structure': SecondaryStructureTask,

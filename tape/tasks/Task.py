@@ -8,7 +8,7 @@ import numpy as np
 import tensorflow as tf
 import rinokeras as rk
 
-from tape.task_models import AminoAcidClassPredictor, GlobalVectorPredictor, ComputeClassVector
+from tape.task_models import AminoAcidClassPredictor, GlobalVectorPredictor, ComputeClassVector, GlobalExtractor
 
 from tape.losses import classification_loss_and_accuracy, binary_loss_and_accuracy
 
@@ -116,9 +116,17 @@ class Task(ABC):
     def key_metric(self) -> str:
         return self._key_metric
 
+#%%
+from sacred import Ingredient
+task_params = Ingredient('task_params')
+
+@task_params.config
+def task_config():
+    use_global = False
+    
+#%%
 
 class SequenceToSequenceClassificationTask(Task):
-
     def __init__(self,
                  key_metric: str,
                  deserialization_func: Callable[[bytes], Dict[str, tf.Tensor]],
@@ -155,20 +163,23 @@ class SequenceToSequenceClassificationTask(Task):
 
 
 class SequenceToFloatTask(Task):
-
+    
+    @task_params.capture
     def __init__(self,
                  key_metric: str,
                  deserialization_func: Callable[[bytes], Dict[str, tf.Tensor]],
                  d_output: int,
                  label: str,
                  input_name: str = 'encoder_output',
-                 output_name: str = 'prediction'):
+                 output_name: str = 'prediction',
+                 use_global = False):
         super().__init__(key_metric, deserialization_func)
         self._d_output = d_output
         self._label = label
         self._input_name = input_name
         self._output_name = output_name
-
+        self._use_global = use_global
+        
     def loss_function(self,
                       inputs: Dict[str, tf.Tensor],
                       outputs: Dict[str, tf.Tensor]) -> Tuple[tf.Tensor, Dict[str, tf.Tensor]]:
@@ -183,26 +194,31 @@ class SequenceToFloatTask(Task):
         return mse, metrics
 
     def build_output_model(self, layers: List[tf.keras.Model]) -> List[tf.keras.Model]:
-        layers.append(ComputeClassVector(self._input_name, 'cls_vector'))
+        if not self.use_global:
+            layers.append(ComputeClassVector(self._input_name, 'cls_vector'))
+        else:
+            layers.append(GlobalExtractor(self._input_name, 'cls_vector'))
         layers.append(GlobalVectorPredictor(self._d_output, 'cls_vector', self._output_name))
         return layers
 
 
 class SequenceClassificationTask(Task):
-
+    @task_params.capture
     def __init__(self,
                  key_metric: str,
                  deserialization_func: Callable[[bytes], Dict[str, tf.Tensor]],
                  n_classes: int,
                  label: str,
                  input_name: str = 'encoder_output',
-                 output_name: str = 'logits'):
+                 output_name: str = 'logits',
+                 use_global = False):
         super().__init__(key_metric, deserialization_func)
         self._n_classes = n_classes
         self._label = label
         self._input_name = input_name
         self._output_name = output_name
-
+        self._use_global = use_global
+        
     def loss_function(self,
                       inputs: Dict[str, tf.Tensor],
                       outputs: Dict[str, tf.Tensor]) -> Tuple[tf.Tensor, Dict[str, tf.Tensor]]:
@@ -216,24 +232,29 @@ class SequenceClassificationTask(Task):
         return loss, metrics
 
     def build_output_model(self, layers: List[tf.keras.Model]) -> List[tf.keras.Model]:
-        layers.append(ComputeClassVector(self._input_name, 'cls_vector'))
+        if not self.use_global:
+            layers.append(ComputeClassVector(self._input_name, 'cls_vector'))
+        else:
+            layers.append(GlobalExtractor(self._input_name, 'cls_vector'))
         layers.append(GlobalVectorPredictor(self._n_classes, 'cls_vector', self._output_name))
         return layers
 
 
 class SequenceBinaryClassificationTask(Task):
-
+    @task_params.capture
     def __init__(self,
                  key_metric: str,
                  deserialization_func: Callable[[bytes], Dict[str, tf.Tensor]],
                  label: str,
                  input_name: str = 'encoder_output',
-                 output_name: str = 'prediction'):
+                 output_name: str = 'prediction',
+                 use_global = False):
         super().__init__(key_metric, deserialization_func)
         self._label = label
         self._input_name = input_name
         self._output_name = output_name
-
+        self._use_global = use_global
+        
     def loss_function(self,
                       inputs: Dict[str, tf.Tensor],
                       outputs: Dict[str, tf.Tensor]) -> Tuple[tf.Tensor, Dict[str, tf.Tensor]]:
@@ -246,6 +267,9 @@ class SequenceBinaryClassificationTask(Task):
         return loss, metrics
 
     def build_output_model(self, layers: List[tf.keras.Model]) -> List[tf.keras.Model]:
-        layers.append(ComputeClassVector(self._input_name, 'cls_vector'))
+        if not self.use_global:
+            layers.append(ComputeClassVector(self._input_name, 'cls_vector'))
+        else:
+            layers.append(GlobalExtractor(self._input_name, 'cls_vector'))
         layers.append(GlobalVectorPredictor(1, 'cls_vector', self._output_name))
         return layers

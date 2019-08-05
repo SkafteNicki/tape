@@ -10,3 +10,4 @@ from .ResidueResidueContactPredictor import ResidueResidueContactPredictor  # no
 from .FreezeWeights import FreezeWeights  # noqa: F401
 from .NetsurfModel import NetsurfModel  # noqa: F401
 from .DeepSFModel import DeepSFModel  # noqa: F401
+from .GlobalExtractor import GlobalExtractor

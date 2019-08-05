@@ -5,12 +5,13 @@ Created on Mon Aug  5 10:48:31 2019
 @author: nsde
 """
 
+import tensorflow as tf
 import tensorflow.keras.backend as K
 from tensorflow.keras import Sequential
 from tensorflow.keras.layers import Embedding, Dense, Conv1D, Flatten, Reshape, Layer, Lambda, Conv2DTranspose
 import numpy as np
-
 from rinokeras.layers import Stack
+from sacred import Ingredient
 
 from tape.models import AbstractTapeModel
 from tape.models import ModelBuilder
@@ -41,10 +42,26 @@ class Conv1DTranspose(Layer):
     def compute_output_shape(self, input_shape):
         return self._model.compute_output_shape(input_shape)
 
+#%%
+def pad_up_to(tensor, max_in_dims, constant_values):
+    s = tf.shape(tensor)
+    paddings = [[0, tf.maximum(m-s[i], tf.constant(0))] for (i,m) in enumerate(max_in_dims)]
+    return tf.pad(tensor, paddings, 'CONSTANT', constant_values=constant_values)
+
 #%% Model
-class MyModel(AbstractTapeModel):
+hparams = Ingredient('my_hparams')
+
+@hparams.config
+def model_cfg():
+    latent_size = 32
+    max_seq_len = 10000
     
-    def __init__(self, n_symbols, latent_size=32):
+class MyModel(AbstractTapeModel):
+    @hparams.capture
+    def __init__(self, n_symbols, latent_size=32, max_seq_len=10000):
+        
+        self.latent_size = latent_size
+        self.max_seq_len = max_seq_len
         
         super().__init__(n_symbols)
         
@@ -76,9 +93,11 @@ class MyModel(AbstractTapeModel):
         sequence = inputs['primary']
         
         embedded = self.input_embedding(sequence)
+        pad_embedded = pad_up_to(embedded, (-1, self.max_seq_len, -1), 0)
+        pad_embedded.set_shape((None,self.max_seq_len,128))
         
-        z_mu = self.enc_mu(embedded)
-        z_std = self.enc_std(embedded)
+        z_mu = self.enc_mu(pad_embedded)
+        z_std = self.enc_std(pad_embedded)
         z = z_mu + K.random_normal(K.shape(z_std)) * z_std
         
         encoder_output = self.dec(z)
