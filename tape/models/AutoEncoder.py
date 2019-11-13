@@ -9,18 +9,19 @@ import rinokeras as rk
 from rinokeras.layers import Stack
 from tensorflow.keras.layers import Conv1D, Cropping1D, BatchNormalization, MaxPooling1D, UpSampling1D, Flatten, Dense, Reshape
 
-from tape.models import AbstractTapeModel
+from .AbstractTapeModel import AbstractTapeModel
 
 ae_hparams = Ingredient('ae')
 
 @ae_hparams.config
-def configure_vae():
+def configure_ae():
     n_filters = 256
     kernel_size = 5
     latent_size = 1000
 
 
-class MyAE(AbstractTapeModel):
+class AutoEncoder(AbstractTapeModel):
+    
     @ae_hparams.capture
     def __init__(self, n_symbols, length=3000, latent_size=1000, n_filters=256,
                  kernel_size=5):

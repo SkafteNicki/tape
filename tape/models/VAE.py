@@ -8,7 +8,7 @@ from sacred import Ingredient
 import rinokeras as rk
 from rinokeras.layers import Stack, ResidualBlock, PaddedConv, PositionEmbedding
 
-from tape.models import AbstractTapeModel
+from .AbstractTapeModel import AbstractTapeModel
 
 vae_hparams = Ingredient('vae')
 
@@ -24,6 +24,8 @@ def configure_vae():
     latent_size = 4
 
 class VAE(AbstractTapeModel):
+    
+    @vae_hparams.capture
     def __init__(self,
                  n_symbols: int,
                  n_layers: int = 35,

@@ -11,25 +11,35 @@ class ComputeClassVector(Model):
 
     def __init__(self,
                  input_name: str = 'encoder_output',
-                 output_name: str = 'cls_vector'):
+                 output_name: str = 'cls_vector',
+                 mean_type: str = 'soft'):
         super().__init__()
         self._input_name = input_name
         self._output_name = output_name
         self.compute_attention = Stack([LayerNorm(), Dense(1, activation='linear'), Dropout(0.1)])
         self.attention_mask = ApplyAttentionMask()
-
+        self._mean_type = mean_type
+        
     def call(self, inputs):
-        sequence_mask = rk.utils.convert_sequence_length_to_sequence_mask(
-            inputs['primary'], inputs['protein_length'])
-
-        encoder_output = inputs[self._input_name]
-        attention_weight = self.compute_attention(encoder_output)
-
-        attention_weight = self.attention_mask(
-            attention_weight, mask=sequence_mask[:, :, None])
-        attention = tf.nn.softmax(attention_weight, 1)
-
-        cls_vector = tf.squeeze(tf.matmul(encoder_output, attention, transpose_a=True), 2)
-        inputs[self._output_name] = cls_vector
+        if self._mean_type != 'normal':
+            sequence_mask = rk.utils.convert_sequence_length_to_sequence_mask(
+                inputs['primary'], inputs['protein_length'])
+    
+            encoder_output = inputs[self._input_name]
+            attention_weight = self.compute_attention(encoder_output)
+    
+            attention_weight = self.attention_mask(
+                attention_weight, mask=sequence_mask[:, :, None])
+            
+            attention = tf.nn.softmax(attention_weight, 1)
+            if self._mean_type == 'hard':
+                cat_idx = tf.stack([tf.range(0, tf.shape(encoder_output)[0]), 
+                                    tf.cast(tf.argmax(attention, axis=1), tf.int32)], axis=1)
+                cls_vector = tf.gather_nd(encoder_output, cat_idx)
+            else:
+                cls_vector = tf.squeeze(tf.matmul(encoder_output, attention, transpose_a=True), 2)
+                inputs[self._output_name] = cls_vector
+        else:
+            inputs[self._output_name] = tf.reduce_mean(inputs[self._input_name], axis=1)
 
         return inputs

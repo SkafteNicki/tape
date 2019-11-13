@@ -123,6 +123,7 @@ task_params = Ingredient('task_params')
 @task_params.config
 def task_config():
     use_global = False
+    mean_type = 'soft' #['soft', 'hard', 'normal']
     
 #%%
 
@@ -172,13 +173,15 @@ class SequenceToFloatTask(Task):
                  label: str,
                  input_name: str = 'encoder_output',
                  output_name: str = 'prediction',
-                 use_global = False):
+                 use_global = False,
+                 mean_type = 'soft'):
         super().__init__(key_metric, deserialization_func)
         self._d_output = d_output
         self._label = label
         self._input_name = input_name
         self._output_name = output_name
         self._use_global = use_global
+        self._mean_type = mean_type
         
     def loss_function(self,
                       inputs: Dict[str, tf.Tensor],
@@ -195,7 +198,7 @@ class SequenceToFloatTask(Task):
 
     def build_output_model(self, layers: List[tf.keras.Model]) -> List[tf.keras.Model]:
         if not self._use_global:
-            layers.append(ComputeClassVector(self._input_name, 'cls_vector'))
+            layers.append(ComputeClassVector(self._input_name, 'cls_vector', self._mean_type))
         else:
             layers.append(GlobalExtractor(self._input_name, 'cls_vector'))
         layers.append(GlobalVectorPredictor(self._d_output, 'cls_vector', self._output_name))
@@ -211,13 +214,15 @@ class SequenceClassificationTask(Task):
                  label: str,
                  input_name: str = 'encoder_output',
                  output_name: str = 'logits',
-                 use_global = False):
+                 use_global = False,
+                 mean_type = 'soft'):
         super().__init__(key_metric, deserialization_func)
         self._n_classes = n_classes
         self._label = label
         self._input_name = input_name
         self._output_name = output_name
         self._use_global = use_global
+        self._mean_type = mean_type
         
     def loss_function(self,
                       inputs: Dict[str, tf.Tensor],
@@ -233,7 +238,7 @@ class SequenceClassificationTask(Task):
 
     def build_output_model(self, layers: List[tf.keras.Model]) -> List[tf.keras.Model]:
         if not self.use_global:
-            layers.append(ComputeClassVector(self._input_name, 'cls_vector'))
+            layers.append(ComputeClassVector(self._input_name, 'cls_vector', self._mean_type))
         else:
             layers.append(GlobalExtractor(self._input_name, 'cls_vector'))
         layers.append(GlobalVectorPredictor(self._n_classes, 'cls_vector', self._output_name))

@@ -31,7 +31,7 @@ def main():
         named_configs=[os.path.join(args.outdir, '1', 'config.json')],
         config_updates=config_updates,
     )
-    return config_updates, outdir
+    return config_updates, args.outdir
 
 if __name__ == '__main__':
     config, outdir = main()

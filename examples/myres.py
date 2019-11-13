@@ -203,7 +203,7 @@ class MyAE(AbstractTapeModel):
 ModelBuilder.add_model('myae', MyAE)
 
 if __name__ == '__main__':
-    from tape.__main__ import proteins
-    proteins.run_commandline()
-#    from tape.run_eval import main
-#    main()
+#    from tape.__main__ import proteins
+#    proteins.run_commandline()
+    from tape.run_eval import main
+    main()
