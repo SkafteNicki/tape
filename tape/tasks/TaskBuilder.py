@@ -4,7 +4,7 @@ from rinokeras.layers import Stack
 from sacred import Ingredient
 
 from tape.task_models import FreezeWeights
-from .Task import Task
+from .Task import Task, task_params
 
 from .BeplerLanguageModelingTask import BeplerLanguageModelingTask
 from .BeplerContactMapTask import BeplerContactMapTask
@@ -14,7 +14,7 @@ from .FluorescenceTask import FluorescenceTask
 from .LanguageModelingTask import LanguageModelingTask
 from .MaskedLanguageModelingTask import MaskedLanguageModelingTask, mask_params
 from .NetsurfTask import NetsurfTask
-from .OwnLanguageModelingTask import OwnLanguageModelingTaskNext, OwnLanguageModelingTaskMask
+from .VariationalObjective import VariationalObjective, elbo_params
 from .BeplerPairedScopeTask import BeplerPairedScopeTask
 from .RemoteHomologyTask import RemoteHomologyTask
 from .SecondaryStructureTask import SecondaryStructureTask, secondary_structure_params
@@ -31,8 +31,7 @@ class TaskBuilder:
         'fluorescence': FluorescenceTask,
         'language_modeling': LanguageModelingTask,
         'masked_language_modeling': MaskedLanguageModelingTask,
-        'own_language_modeling_next': OwnLanguageModelingTaskNext,
-        'own_language_modeling_mask': OwnLanguageModelingTaskMask,
+        'variational_modeling': VariationalObjective,
         'netsurf': NetsurfTask,
         'remote_homology': RemoteHomologyTask,
         'secondary_structure': SecondaryStructureTask,
@@ -40,7 +39,7 @@ class TaskBuilder:
         'unidirectional_language_modeling': UnidirectionalLanguageModelingTask
     }
 
-    params: List[Ingredient] = [mask_params, secondary_structure_params]
+    params: List[Ingredient] = [mask_params, secondary_structure_params, elbo_params, task_params]
 
     @staticmethod
     def build_task(task_name: str) -> Task:

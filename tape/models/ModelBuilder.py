@@ -12,7 +12,8 @@ from .BeplerModel import BeplerModel, bepler_hparams
 from .UniRepModel import UniRepModel, unirep_hparams
 from .OneHotModel import OneHotModel
 from .OneHotEvolutionaryModel import OneHotEvolutionaryModel
-
+from .VAE import VAE, vae_hparams
+from .AutoEncoder import AutoEncoder, ae_hparams
 
 class ModelBuilder:
 
@@ -23,14 +24,18 @@ class ModelBuilder:
         'bepler': BeplerModel,
         'unirep': UniRepModel,
         'one_hot': OneHotModel,
-        'one_hot_evolutionary': OneHotEvolutionaryModel}
+        'one_hot_evolutionary': OneHotEvolutionaryModel,
+        'vae': VAE,
+        'ae': AutoEncoder}
 
     hparams: List[Ingredient] = [
         transformer_hparams,
         resnet_hparams,
         lstm_hparams,
         bepler_hparams,
-        unirep_hparams]
+        unirep_hparams,
+        vae_hparams,
+        ae_hparams]
 
     @staticmethod
     def build_model(model_name: str) -> Model:

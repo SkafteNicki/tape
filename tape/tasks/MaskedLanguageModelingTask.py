@@ -25,7 +25,7 @@ class MaskedLanguageModelingTask(AbstractLanguageModelingTask):
                  style: str = 'random'):
         n_symbols = len(PFAM_VOCAB)
         mask_token = PFAM_VOCAB['<MASK>']
-
+        mask_name = 'bert_mask' if percentage != 0 else 'sequence_mask'
         super().__init__(
             key_metric='BERTAcc',
             deserialization_func=deserialize_pfam_sequence,
@@ -33,7 +33,7 @@ class MaskedLanguageModelingTask(AbstractLanguageModelingTask):
             label_name='original_sequence',
             input_name='encoder_output',
             output_name='bert_logits',
-            mask_name='bert_mask')
+            mask_name=mask_name)
         self._mask_token = mask_token
         self._percentage = percentage
         self._style = style

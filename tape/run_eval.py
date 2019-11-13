@@ -4,7 +4,9 @@ import os
 from tape.__main__ import proteins
 
 import argparse
-
+import numpy as np
+import pickle as pkl
+from scipy.stats import spearmanr
 
 def main():
     parser = argparse.ArgumentParser()
@@ -29,7 +31,36 @@ def main():
         named_configs=[os.path.join(args.outdir, '1', 'config.json')],
         config_updates=config_updates,
     )
-
+    return config_updates, outdir
 
 if __name__ == '__main__':
-    main()
+    config, outdir = main()
+    
+    if config['tasks'] == 'stability':
+        with open(os.path.join(outdir, 'outputs.pkl'), 'rb') as f:
+            results = pkl.load(f)
+            predictions = np.array(results['prediction'])
+            true_values = np.array(results['stability_score'])
+            score, _ = spearmanr(true_values, predictions)
+            
+        print('stability score:', score)
+        
+    if config['tasks'] == 'fluorescence':
+        def postprocess(data):
+            """ Converts list of numpy arrays to flat numpy array. """
+            _clean = [float(i) for i in data]
+            clean = np.array(_clean)
+            return clean
+        
+        with open(os.path.join(outdir, 'outputs.pkl'), 'rb') as f:
+            results = pkl.load(f) 
+            
+            predictions = postprocess(results['prediction'])
+            true_values = postprocess(results['log_fluorescence'])
+            
+            score, _ = spearmanr(true_values, predictions)
+            
+        print('fluorescence score:', score)
+        
+        
+            

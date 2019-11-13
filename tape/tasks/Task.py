@@ -194,7 +194,7 @@ class SequenceToFloatTask(Task):
         return mse, metrics
 
     def build_output_model(self, layers: List[tf.keras.Model]) -> List[tf.keras.Model]:
-        if not self.use_global:
+        if not self._use_global:
             layers.append(ComputeClassVector(self._input_name, 'cls_vector'))
         else:
             layers.append(GlobalExtractor(self._input_name, 'cls_vector'))
