@@ -89,8 +89,8 @@ def setup_tensorflow(device: Union[str, int, Sequence[int], Sequence[str]], allo
         raise ValueError("Unrecognized device type. Expected int, str, or list. "
                          "Received {}.".format(type(device)))
 
-    os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-    os.environ["CUDA_VISIBLE_DEVICES"] = device
+    #os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+    #os.environ["CUDA_VISIBLE_DEVICES"] = device
     os.environ["TF_CPP_MIN_LOG_LEVEL"] = "1"  # disable tensorflow info logging
     tf.logging.set_verbosity(tf.logging.WARN)
 
