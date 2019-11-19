@@ -31,13 +31,9 @@ def main():
         named_configs=[os.path.join(args.outdir, '1', 'config.json')],
         config_updates=config_updates,
     )
-    return config_updates, args.outdir
-
-if __name__ == '__main__':
-    config, outdir = main()
     
     if config['tasks'] == 'stability':
-        with open(os.path.join(outdir, 'outputs.pkl'), 'rb') as f:
+        with open(os.path.join(args.outdir, 'outputs.pkl'), 'rb') as f:
             results = pkl.load(f)
             predictions = np.array(results['prediction'])
             true_values = np.array(results['stability_score'])
@@ -45,14 +41,14 @@ if __name__ == '__main__':
             
         print('stability score:', score)
         
-    if config['tasks'] == 'fluorescence':
+    if config_updates['tasks'] == 'fluorescence':
         def postprocess(data):
             """ Converts list of numpy arrays to flat numpy array. """
             _clean = [float(i) for i in data]
             clean = np.array(_clean)
             return clean
         
-        with open(os.path.join(outdir, 'outputs.pkl'), 'rb') as f:
+        with open(os.path.join(args.outdir, 'outputs.pkl'), 'rb') as f:
             results = pkl.load(f) 
             
             predictions = postprocess(results['prediction'])
@@ -61,6 +57,9 @@ if __name__ == '__main__':
             score, _ = spearmanr(true_values, predictions)
             
         print('fluorescence score:', score)
-        
-        
+
+if __name__ == '__main__':
+    main()
+    
+    
             
