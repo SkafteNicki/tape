@@ -16,6 +16,7 @@ from tape.tasks import TaskBuilder
 def embed_from_fasta(fasta_file,
                      model: str,
                      load_from=None,
+                     use_global=False,
                      vocab=PFAM_VOCAB):
     sess = tf.Session()
     embedding_model = ModelBuilder.build_model(model)
@@ -31,7 +32,11 @@ def embed_from_fasta(fasta_file,
     embeddings = []
     for record in SeqIO.parse(fasta_file, 'fasta'):
         int_sequence = np.array([vocab[aa] for aa in record.seq], ndmin=2)
-        encoder_output = sess.run(output['encoder_output'],
+        if use_global:
+            out = output['global_emb']
+        else:
+            out = output['encoder_output']
+        encoder_output = sess.run(out,#output['encoder_output'],
                                   feed_dict={primary: int_sequence,
                                              protein_length: [int_sequence.shape[1]]})
         embeddings.append(encoder_output)
@@ -41,6 +46,7 @@ def embed_from_fasta(fasta_file,
 def embed_from_tfrecord(tfrecord_file,
                         model: str,
                         load_from=None,
+                        use_global=False,
                         deserialization_func=deserialize_fasta_sequence):
     sess = tf.Session()
     embedding_model = ModelBuilder.build_model(model)
@@ -60,18 +66,22 @@ def embed_from_tfrecord(tfrecord_file,
     output = embedding_model(batch)
     embeddings = []
     with suppress(tf.errors.OutOfRangeError):
+        if use_global:
+            out = output['global_emb']
+        else:
+            out = output['encoder_output']
         while True:
-            encoder_output_batch = sess.run(output['encoder_output'])
+            encoder_output_batch = sess.run(out)
             for encoder_output in encoder_output_batch:
                 embeddings.append(encoder_output)
     return embeddings
-
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('datafile')
     parser.add_argument('--model', default=None)
     parser.add_argument('--load-from', default=None)
+    parser.add_argument('--use_global', default=False)
     parser.add_argument('--task', default=None, help='If running a forward pass through existing task datasets, refer to the task with this flag')
     args = parser.parse_args()
 
@@ -83,11 +93,12 @@ def main():
 
 
     if args.datafile.endswith('.fasta'):
-        embeddings = embed_from_fasta(args.datafile, args.model, args.load_from)
+        embeddings = embed_from_fasta(args.datafile, args.model, args.load_from, args.use_global)
     elif args.datafile.endswith('.tfrecord'):
         embeddings = embed_from_tfrecord(args.datafile,
                                          args.model,
                                          args.load_from,
+                                         args.use_global,
                                          deserialization_func=deserialization_func)
     else:
         raise Exception('Unsupported file type - only .fasta and .tfrecord supported')

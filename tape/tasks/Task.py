@@ -10,7 +10,7 @@ import rinokeras as rk
 
 from tape.task_models import AminoAcidClassPredictor, GlobalVectorPredictor, ComputeClassVector, GlobalExtractor
 
-from tape.losses import classification_loss_and_accuracy, binary_loss_and_accuracy
+from tape.losses import classification_loss_and_accuracy, binary_loss_and_accuracy, spearman_corr
 
 
 class Task(ABC):
@@ -191,8 +191,8 @@ class SequenceToFloatTask(Task):
 
         mse = tf.losses.mean_squared_error(label, prediction)
         mae = tf.losses.absolute_difference(label, prediction)
-
-        metrics = {self.key_metric: mae}
+        scorr = spearman_corr(label, prediction)
+        metrics = {self.key_metric: mae, 'S_Corr': scorr}
 
         return mse, metrics
 

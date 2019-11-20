@@ -14,6 +14,7 @@ from .OneHotModel import OneHotModel
 from .OneHotEvolutionaryModel import OneHotEvolutionaryModel
 from .VAE import VAE, vae_hparams
 from .AutoEncoder import AutoEncoder, ae_hparams
+from .DeepAutoEncoder import DeepAutoEncoder, dae_hparams
 
 class ModelBuilder:
 
@@ -26,7 +27,8 @@ class ModelBuilder:
         'one_hot': OneHotModel,
         'one_hot_evolutionary': OneHotEvolutionaryModel,
         'vae': VAE,
-        'ae': AutoEncoder}
+        'autoencoder': AutoEncoder,
+        'deepautoencoder': DeepAutoEncoder}
 
     hparams: List[Ingredient] = [
         transformer_hparams,
@@ -35,7 +37,8 @@ class ModelBuilder:
         bepler_hparams,
         unirep_hparams,
         vae_hparams,
-        ae_hparams]
+        ae_hparams,
+        dae_hparams]
 
     @staticmethod
     def build_model(model_name: str) -> Model:

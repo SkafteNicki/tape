@@ -244,7 +244,7 @@ def eval(_run, _config, tasks: Union[str, List[str]], model: str):
 
     if isinstance(tasks, str):
         tasks = [tasks]
-
+    tasks = tasks[0].split(',')
     embedding_model = ModelBuilder.build_model(model)
     task_list = TaskBuilder.build_tasks(tasks)
     task_model = TaskBuilder.build_task_model(
@@ -258,7 +258,7 @@ def eval(_run, _config, tasks: Union[str, List[str]], model: str):
     else:
         datafile = _config['datafile'] if ',' not in _config['datafile'] else _config['datafile'].split(',')
         valid_data = task_list[0].get_test_data(embedding_model.get_optimal_batch_sizes(), datafile)
-
+    print(valid_data)
     test_graph = rk.train.TestGraph.from_experiment(experiment, valid_data)
 
     sess.run(tf.global_variables_initializer())
@@ -290,7 +290,8 @@ def main(_run, _config, tasks: Union[str, List[str]], model: str):
 
     if isinstance(tasks, str):
         tasks = [tasks]
-
+    tasks = tasks[0].split(',')
+    
     embedding_model = ModelBuilder.build_model(model)
     task_list = TaskBuilder.build_tasks(tasks)
     task_model = TaskBuilder.build_task_model(

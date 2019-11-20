@@ -24,5 +24,4 @@ class GlobalVectorPredictor(Model):
     def call(self, inputs):
         prediction = self.predict_vector(inputs[self._input_name])
         inputs[self._output_name] = prediction
-
         return inputs

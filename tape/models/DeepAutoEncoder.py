@@ -11,22 +11,24 @@ from tensorflow.keras.layers import Conv1D, Cropping1D, BatchNormalization, Aver
 
 from .AbstractTapeModel import AbstractTapeModel
 
-ae_hparams = Ingredient('ae')
+dae_hparams = Ingredient('deepautoencoder')
 
-@ae_hparams.config
+@dae_hparams.config
 def configure_ae():
+    n_layers = 5 # actual layers are 2 * 6 * n_layers
     n_filters = 256
     kernel_size = 9
     latent_size = 1000
     pooling_type = 'avarage'
     dropout = 0
 
-class AutoEncoder(AbstractTapeModel):
+class DeepAutoEncoder(AbstractTapeModel):
     
-    @ae_hparams.capture
-    def __init__(self, n_symbols, length=3000, latent_size=1000, n_filters=256,
+    @dae_hparams.capture
+    def __init__(self, n_symbols, n_layers=5, length=3000, latent_size=1000, n_filters=256,
                  kernel_size=5, pooling_type='average', dropout=0):
         super().__init__(n_symbols)
+        self._n_layers = n_layers
         self._length = length
         self._latent_size = latent_size
         self._kernel_size = kernel_size
@@ -41,18 +43,10 @@ class AutoEncoder(AbstractTapeModel):
         
         encoder = Stack()
         encoder.add(input_embedding)
-        encoder.add(ResidualBlock(1, n_filters, kernel_size, activation='relu', dilation_rate=1, dropout=dropout))
-        encoder.add(pool(2,2))
-        encoder.add(ResidualBlock(1, n_filters, kernel_size, activation='relu', dilation_rate=1, dropout=dropout))
-        encoder.add(pool(2,2))
-        encoder.add(ResidualBlock(1, n_filters, kernel_size, activation='relu', dilation_rate=1, dropout=dropout))
-        encoder.add(pool(2,2))
-        encoder.add(ResidualBlock(1, n_filters, kernel_size, activation='relu', dilation_rate=1, dropout=dropout))
-        encoder.add(pool(2,2))
-        encoder.add(ResidualBlock(1, n_filters, kernel_size, activation='relu', dilation_rate=1, dropout=dropout))
-        encoder.add(pool(2,2))
-        encoder.add(ResidualBlock(1, n_filters, kernel_size, activation='relu', dilation_rate=1, dropout=dropout))
-        encoder.add(pool(2,2))
+        for _ in range(6):
+            for _ in range(n_layers):
+                encoder.add(ResidualBlock(1, n_filters, kernel_size, activation='relu', dilation_rate=1, dropout=dropout))
+            encoder.add(pool(2,2))
         
         latent = Stack()
         latent.add(Flatten())
@@ -61,18 +55,10 @@ class AutoEncoder(AbstractTapeModel):
         decoder = Stack()
         decoder.add(Dense(47*n_filters, input_shape=(self._latent_size,), activation='relu'))
         decoder.add(Reshape((47, n_filters)))
-        decoder.add(UpSampling1D(2))
-        encoder.add(ResidualBlock(1, n_filters, kernel_size, activation='relu', dilation_rate=1, dropout=dropout))
-        decoder.add(UpSampling1D(2))
-        encoder.add(ResidualBlock(1, n_filters, kernel_size, activation='relu', dilation_rate=1, dropout=dropout))
-        decoder.add(UpSampling1D(2))
-        encoder.add(ResidualBlock(1, n_filters, kernel_size, activation='relu', dilation_rate=1, dropout=dropout))
-        decoder.add(UpSampling1D(2))
-        encoder.add(ResidualBlock(1, n_filters, kernel_size, activation='relu', dilation_rate=1, dropout=dropout))
-        decoder.add(UpSampling1D(2))
-        encoder.add(ResidualBlock(1, n_filters, kernel_size, activation='relu', dilation_rate=1, dropout=dropout))
-        decoder.add(UpSampling1D(2))
-        encoder.add(ResidualBlock(1, n_filters, kernel_size, activation='relu', dilation_rate=1, dropout=dropout))
+        for _ in range(6):
+            decoder.add(UpSampling1D(2))
+            for _ in range(n_layers):
+                encoder.add(ResidualBlock(1, n_filters, kernel_size, activation='relu', dilation_rate=1, dropout=dropout))
         decoder.add(Cropping1D((0,8)))
 
         self.encoder = encoder
@@ -82,13 +68,11 @@ class AutoEncoder(AbstractTapeModel):
     def call(self, inputs):
         sequence = inputs['primary']
         L = tf.shape(sequence)[1]
-        #protein_length = inputs['protein_length']
         pad_sequence = tf.pad(sequence, [[0,0], [0, self._length-L]], 'CONSTANT', constant_values=0)
-        pad_sequence.set_shape((None, self._length))
-        #sequence_mask = rk.utils.convert_sequence_length_to_sequence_mask(pad_sequence, protein_length)
-        encoder_output = self.encoder(pad_sequence)#, mask=sequence_mask)
-        latent = self.latent(encoder_output)#, mask=sequence_mask)
-        decoder_output = self.decoder(latent)#, mask=sequence_mask)
+        pad_sequence.set_shape((None, self._length))        
+        encoder_output = self.encoder(pad_sequence)
+        latent = self.latent(encoder_output)
+        decoder_output = self.decoder(latent)
         inputs['global_emb'] = latent
         inputs['encoder_output'] = decoder_output[:,:L]
         return inputs

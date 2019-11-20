@@ -1,6 +1,6 @@
 import tensorflow as tf
 import rinokeras as rk
-
+from scipy.stats import spearmanr
 
 def classification_loss_and_accuracy(labels, logits, mask=None):
     mask = 1 if mask is None else tf.cast(mask, logits.dtype)
@@ -41,3 +41,9 @@ def binary_loss_and_accuracy(labels, logits, mask=None):
     loss = tf.losses.sigmoid_cross_entropy(labels, logits, mask)
     accuracy = rk.utils.accuracy(labels, predictions, mask)
     return loss, accuracy
+
+def spearman_corr(labels, pred, mask=None):
+    mask = 1 if mask is None else tf.cast(mask, pred.dtype)
+    return tf.py_function(spearmanr, 
+                          [tf.cast(labels, tf.float32), tf.cast(pred, tf.float32)], 
+                          Tout = tf.float32)
