@@ -21,9 +21,10 @@ class ComputeClassVector(Model):
         self._mean_type = mean_type
         
     def call(self, inputs):
-        if self._mean_type != 'normal':
-            sequence_mask = rk.utils.convert_sequence_length_to_sequence_mask(
+        sequence_mask = rk.utils.convert_sequence_length_to_sequence_mask(
                 inputs['primary'], inputs['protein_length'])
+        if self._mean_type != 'normal':
+            
     
             encoder_output = inputs[self._input_name]
             attention_weight = self.compute_attention(encoder_output)
@@ -40,6 +41,8 @@ class ComputeClassVector(Model):
                 cls_vector = tf.squeeze(tf.matmul(encoder_output, attention, transpose_a=True), 2)
                 inputs[self._output_name] = cls_vector
         else:
-            inputs[self._output_name] = tf.reduce_mean(inputs[self._input_name], axis=1)
+            inputs[self._output_name] = tf.reduce_mean(
+                    tf.boolean_mask(inputs[self._input_name], 
+                                    sequence_mask[:,:,None]), axis=1)
 
         return inputs
