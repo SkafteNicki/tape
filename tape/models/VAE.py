@@ -21,7 +21,7 @@ def configure_vae():
     activation = 'relu'  # noqa: F841
     dilation_rate = 2  # noqa: F841
     dropout = 0.1  # noqa: F841
-    latent_size = 4
+    latent_size = 2
 
 class VAE(AbstractTapeModel):
     
@@ -98,7 +98,7 @@ class VAE(AbstractTapeModel):
         
         z_mu = self.z_mu(encoder_output, mask=sequence_mask)
         z_var = tf.nn.softplus(self.z_var(encoder_output, mask=sequence_mask)) + 1e-4
-        z = z_mu + tf.random_normal(tf.shape(z_var)) * tf.sqrt(z_var)
+        z = z_mu #+ tf.random_normal(tf.shape(z_var)) * tf.sqrt(z_var)
 
         decoder_output = self.decoder(z, mask=sequence_mask)
         
