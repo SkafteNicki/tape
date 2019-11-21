@@ -31,7 +31,7 @@ def main():
         named_configs=[os.path.join(args.outdir, '1', 'config.json')],
         config_updates=config_updates,
     )
-    
+    print(config)
     if config['tasks'] == 'stability':
         with open(os.path.join(args.outdir, 'outputs.pkl'), 'rb') as f:
             results = pkl.load(f)

@@ -34,15 +34,16 @@ class ComputeClassVector(Model):
             
             attention = tf.nn.softmax(attention_weight, 1)
             if self._mean_type == 'hard':
-                cat_idx = tf.stack([tf.range(0, tf.shape(encoder_output)[0]), 
-                                    tf.cast(tf.argmax(attention, axis=1), tf.int32)], axis=1)
-                cls_vector = tf.gather_nd(encoder_output, cat_idx)
+                print(encoder_output)
+                print(attention)
+                idx = [tf.range(tf.shape(encoder_output)[0]),
+                       tf.cast(tf.squeeze(tf.argmax(attention, axis=1)), tf.int32)]
+                cls_vector = tf.gather_nd(encoder_output, tf.transpose(idx))
             else:
                 cls_vector = tf.squeeze(tf.matmul(encoder_output, attention, transpose_a=True), 2)
-                inputs[self._output_name] = cls_vector
+            inputs[self._output_name] = cls_vector
         else:
-            inputs[self._output_name] = tf.reduce_mean(
-                    tf.boolean_mask(inputs[self._input_name], 
-                                    sequence_mask[:,:,None]), axis=1)
+            sequence_mask = tf.cast(sequence_mask, tf.float32)
+            inputs[self._output_name] = tf.reduce_sum(inputs[self._input_name] * sequence_mask[:,:,None], axis=1) / tf.reduce_sum(sequence_mask, axis=1, keepdims=True)
 
         return inputs
