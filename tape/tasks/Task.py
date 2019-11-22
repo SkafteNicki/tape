@@ -191,8 +191,7 @@ class SequenceToFloatTask(Task):
 
         mse = tf.losses.mean_squared_error(label, prediction)
         mae = tf.losses.absolute_difference(label, prediction)
-        scorr = spearman_corr(label, prediction)
-        metrics = {self.key_metric: mae, 'S_Corr': scorr}
+        metrics = {self.key_metric: mae}
 
         return mse, metrics
 
